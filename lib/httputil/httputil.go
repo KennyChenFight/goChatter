@@ -15,7 +15,7 @@ func Init(mapper core.IMapper) {
 
 func BindForUpdate(c *gin.Context, obj interface{}) (map[string]bool, error) {
 	var input map[string]interface{}
-	_ = c.ShouldBind(&input)
+	_ = c.ShouldBindJSON(&input)
 	inputBytes, err := json.Marshal(input)
 	if err != nil {
 		return nil, err

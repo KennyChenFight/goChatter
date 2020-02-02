@@ -1,6 +1,8 @@
 package constant
 
-var (
+const (
+	UserId     = "userId"
+	DB         = "db"
 	DbSession  = "session"
 	StatusCode = "statusCode"
 	Error      = "error"

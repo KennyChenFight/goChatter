@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"github.com/KennyChenFight/goChatter/lib/auth"
 	"github.com/KennyChenFight/goChatter/lib/constant"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -17,6 +18,12 @@ func Init(database *xorm.Engine) {
 
 func Wrap() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		userId, err := auth.Verify(c.GetHeader("Authorization"))
+		if err != nil {
+			SendResponse(c, http.StatusUnauthorized, map[string]string{"error": err.Error()})
+			return
+		}
+
 		session := db.NewSession()
 		err0 := session.Begin()
 
@@ -26,6 +33,7 @@ func Wrap() gin.HandlerFunc {
 		}
 		defer session.Close()
 
+		c.Set(constant.UserId, userId)
 		c.Set(constant.DbSession, session)
 		c.Set(constant.StatusCode, nil)
 		c.Set(constant.Error, nil)
@@ -47,6 +55,26 @@ func Wrap() gin.HandlerFunc {
 		} else {
 			session.Rollback()
 			SendResponse(c, statusCode, map[string]string{"error": err1.(error).Error()})
+		}
+	}
+}
+
+func Plain() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set(constant.DB, db)
+		c.Set(constant.StatusCode, nil)
+		c.Set(constant.Error, nil)
+		c.Set(constant.Output, nil)
+		c.Next()
+
+		statusCode := c.GetInt(constant.StatusCode)
+		err := c.MustGet(constant.Error)
+		output := c.MustGet(constant.Output)
+
+		if err != nil {
+			SendResponse(c, statusCode, map[string]string{"error": err.(error).Error()})
+		} else {
+			SendResponse(c, statusCode, output)
 		}
 	}
 }
